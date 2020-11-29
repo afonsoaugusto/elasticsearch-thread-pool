@@ -1,0 +1,199 @@
+version: "3.8"
+
+services:
+
+  elasticsearch:
+    environment:
+      discovery.type: single-node
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.8.1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"    
+      - "9300:9300"  
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]      
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+        reservations:
+          cpus: '1.0'
+          memory: 1024M        
+
+  cerebro:
+    image: lmenezes/cerebro
+    ports:
+      - "9000:9000"
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]      
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.8.1
+    ports:
+      - "5601:5601"
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+    # healthcheck:
+      # test: wget -qO- http://localhost:5601 > /dev/null
+      # interval: 30s
+      # retries: 3
+
+  # logstash:
+  #   hostname: logstash
+  #   command: sh -c "logstash -e 'input { syslog  { type => syslog port => 10514   } gelf { } } output { stdout { codec => rubydebug } elasticsearch { hosts => [ \"elasticsearch\" ] } }'"
+  #   image: logstash:alpine
+  #   ports:
+  #       - "10514:10514/tcp"
+  #       - "10514:10514/udp"
+  #       - "12201:12201/udp"
+  #   networks:
+  #     - elk
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 1
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:6.8.1
+    hostname: apm-server
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports: 
+      - 8200:8200
+    depends_on:
+      - elasticsearch
+      - kibana
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  api-uuid:
+    image: afonsoaugusto/api-uuid
+    environment:
+      ELASTIC_APM_SERVICE_NAME: api-uuid
+      ELASTIC_APM_SERVER_URL: http://apm-server:8200
+      PORT: 8082
+    ports: 
+      - 8082:8082
+    depends_on:
+      - apm-server
+    networks:
+      - elk
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  # metricbeat:
+    # image: afonsoaugusto/metricbeat-mongodb
+    # environment:
+      # MONGODB_URL: mongodb://mongo:27017
+      # ELASTICSEARCH_URL: http://elasticsearch:9200
+      # KIBANA_URL: http://kibana:5601
+    # depends_on:
+      # - elasticsearch
+      # - kibana
+    # networks:
+      # - elk
+    # deploy:
+      # mode: replicated
+      # replicas: 1
+
+  elasticsearch_exporter:
+    image: justwatch/elasticsearch_exporter:1.1.0
+    command:
+     - '--es.uri=http://elasticsearch:9200'
+    ports:
+      - "9114:9114"
+    networks:
+      - elk
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - 9090:9090
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - cadvisor
+    networks:
+      - elk
+
+  cadvisor:
+    image: gcr.io/google-containers/cadvisor:latest
+    ports:
+      - 8080:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    depends_on:
+      - redis
+    networks:
+      - elk    
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - elk
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/var/lib/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/etc/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - elk
+    ports:
+      - "3000:3000"
+
+volumes:
+  elasticsearch-data:
+  prometheus-data:
+  grafana_data:
+
+networks:
+  elk:
+    # driver: bridge
+    # driver_opts:
+      # encrypted: "true"
+
+# version: "3.8"
+# services:
+#   redis:
+#     image: redis:alpine
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '0.50'
+#           memory: 50M
+#         reservations:
+#           cpus: '0.25'
+#           memory: 20M
