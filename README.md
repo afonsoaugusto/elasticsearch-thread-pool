@@ -51,4 +51,18 @@ sudo docker run \
   --device=/dev/kmsg \
   gcr.io/cadvisor/cadvisor:$VERSION
 ```
+export DIR=/workspaces/elasticsearch-thread-pool
+esrally \
+  --track-path=$DIR/track.json \
+  --user-tag="data_nodes:1" \
+  --challenge=bulk-index-8_shards \
+  --target-hosts=$EC_CLUSTER:9243 \
+  --pipeline=benchmark-only \
+  --cluster-health=yellow \
+  --client-options="use_ssl:true,verify_certs:true,basic_auth_user:'$EC_USER',basic_auth_password:'$EC_PASSWORD'"
+
+
+esrally \
+  --target-hosts=192.168.100.19:9200 \
+  --pipeline=benchmark-only
 

@@ -9,3 +9,8 @@ scrape_configs:
   static_configs:
   - targets:
     - elasticsearch_exporter:9114    
+- job_name: node_exporter
+  scrape_interval: 5s
+  static_configs:
+  - targets:
+    - 192.168.100.19:9100      

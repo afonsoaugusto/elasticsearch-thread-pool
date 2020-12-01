@@ -110,7 +110,7 @@ apm-server:
     # output section will be reused.
     # Note that configuration needs to point to a secured Elasticsearch cluster that is able to serve API key requests.
     elasticsearch:
-      hosts: ["elasticsearch:9200"]
+      hosts: ["192.168.100.19:9200"]
 
       protocol: "http"
 
@@ -497,7 +497,7 @@ output.elasticsearch:
   # Scheme and port can be left out and will be set to the default (`http` and `9200`).
   # In case you specify and additional path, the scheme is required: `http://localhost:9200/path`.
   # IPv6 addresses should always be defined as: `https://[2001:db8::1]:9200`.
-  hosts: ["elasticsearch:9200"]
+  hosts: ["192.168.100.19:9200"]
 
   # Boolean flag to enable or disable the output module.
   #enabled: true
