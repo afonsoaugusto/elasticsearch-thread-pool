@@ -8,7 +8,7 @@ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
 ```bash
 sudo systemctl start docker
-docker swarm init --advertise-addr 192.168.100.8
+docker swarm init --advertise-addr 192.168.100.2
 
 docker stack deploy --prune -c docker-compose.yml stackdemo
 
@@ -63,6 +63,6 @@ esrally \
 
 
 esrally \
-  --target-hosts=192.168.100.19:9200 \
+  --target-hosts=elasticsearch:9200 \
   --pipeline=benchmark-only
 

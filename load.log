@@ -1,5 +1,5 @@
 vscode ➜ /workspaces/elasticsearch-thread-pool (main ✗) $ esrally \
->   --target-hosts=192.168.100.19:9200 \
+>   --target-hosts=elasticsearch:9200 \
 >   --pipeline=benchmark-only
 
     ____        ____
