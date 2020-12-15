@@ -1,0 +1,3 @@
+[submodule "workshop/Workshop-Zero-To-Hero"]
+	path = workshop/Workshop-Zero-To-Hero
+	url = git@github.com:techlipe/Workshop-Zero-To-Hero.git

@@ -52,3 +52,4 @@ sudo docker run \
   gcr.io/cadvisor/cadvisor:$VERSION
 ```
 
+## Workshop elasticsearch
